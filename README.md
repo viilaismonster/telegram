@@ -1,6 +1,14 @@
 Telegram S Edition Android App
 ========
 
+migrate dev environment to andorid studio 0.4.2 in windows
+========
+
+origin s version of telegram has a lot of IDE bug when opening in windows
+
+- 2014.3.19 @viila
+
+
 This is second version of Telegram app.
 
 [![Telegram S](https://developer.android.com/images/brand/en_generic_rgb_wo_45.png)](https://play.google.com/store/apps/details?id=org.telegram.android "Telegram S")

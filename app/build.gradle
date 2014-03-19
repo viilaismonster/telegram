@@ -30,10 +30,13 @@ if (project.hasProperty('buildIndex')) {
 } else {
     project.version = 'debug'
 }
-
 android {
     compileSdkVersion 19
     buildToolsVersion "19.0.0"
+
+    applicationVariants.all { variant ->
+        variantData.ndkCompileTask.enabled = false
+    }
 
     if (project.hasProperty("signStorage")) {
         signingConfigs {
@@ -181,4 +184,5 @@ dependencies {
 }
 
 task lightDist(dependsOn: ['assembleCommonRelease', 'assembleBetaRelease', 'assembleHockeyDebuggable', 'assembleHockeytestDebuggable']) << {
+//task lightDist(dependsOn: []) << {
 }

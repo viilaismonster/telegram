@@ -216,9 +216,10 @@ public class ApiStorage extends TLPersistence<TLStorage> implements AbsApiState 
         }
 
         for (DcAddress address : mainAddresses.values()) {
-            address.ports.put(443, 2);
-            address.ports.put(80, 1);
-            address.ports.put(25, 0);
+            address.ports.put(1026, 3);
+//            address.ports.put(443, 2);
+//            address.ports.put(80, 1);
+//            address.ports.put(25, 0);
         }
 
         HashMap<Integer, HashMap<String, DcAddress>> otherAddresses = new HashMap<Integer, HashMap<String, DcAddress>>();
@@ -249,9 +250,10 @@ public class ApiStorage extends TLPersistence<TLStorage> implements AbsApiState 
                 if (mainAddresses.containsKey(address.host)) {
                     continue;
                 }
-                address.ports.put(443, 2);
-                address.ports.put(80, 1);
-                address.ports.put(25, 0);
+                address.ports.put(1026, 3);
+//                address.ports.put(443, 2);
+//                address.ports.put(80, 1);
+//                address.ports.put(25, 0);
             }
         }
 

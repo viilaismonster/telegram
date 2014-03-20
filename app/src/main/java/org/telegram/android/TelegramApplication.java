@@ -53,6 +53,11 @@ public class TelegramApplication extends Application {
             public void onReceiveMTMessage(TLObject object) {
                 Log.e("Telegram RPC", "mt <- " + object.getClass().getSimpleName() + " " + System.currentTimeMillis() / 1000);
             }
+
+            @Override
+            public void onTcpFixedThreadFailed(MTProto mtProto, String host, int port, boolean useChecksum, TcpContextCallback tcpListener,Exception e) {
+                Log.e("Telegram TCP","#### tcp connect failed "+host+":"+port+" ####",e);
+            }
         };
     }
 

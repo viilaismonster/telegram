@@ -1,20 +1,29 @@
 package org.telegram.android;
 
 import android.app.Application;
+import android.util.Log;
 import org.telegram.android.config.NotificationSettings;
-import org.telegram.android.core.engines.ModelEngine;
+import org.telegram.android.config.UserSettings;
 import org.telegram.android.config.WallpaperHolder;
 import org.telegram.android.core.*;
-import org.telegram.android.core.background.*;
+import org.telegram.android.core.background.MediaSender;
+import org.telegram.android.core.background.MessageSender;
+import org.telegram.android.core.background.SelfDestructProcessor;
+import org.telegram.android.core.background.UpdateProcessor;
+import org.telegram.android.core.engines.ModelEngine;
 import org.telegram.android.core.files.UploadController;
-import org.telegram.android.config.UserSettings;
 import org.telegram.android.critical.ApiStorage;
 import org.telegram.android.kernel.*;
 import org.telegram.android.media.DownloadManager;
 import org.telegram.android.reflection.CrashHandler;
-import org.telegram.android.ui.*;
+import org.telegram.android.ui.EmojiProcessor;
+import org.telegram.android.ui.UiResponsibility;
 import org.telegram.android.util.NativeLibLoader;
 import org.telegram.api.engine.TelegramApi;
+import org.telegram.mtproto.MTProto;
+import org.telegram.mtproto.schedule.Scheduller;
+import org.telegram.mtproto.transport.TcpContextCallback;
+import org.telegram.tl.TLObject;
 
 /**
  * Author: Korshakov Stepan
@@ -24,6 +33,28 @@ public class TelegramApplication extends Application {
 
     private ApplicationKernel kernel;
     private KernelsLoader kernelsLoader;
+
+    {
+        Scheduller.injector = new Scheduller.Injector() {
+            @Override
+            public int postMessageDelayed(TLObject object, boolean isRpc, long timeout, int delay, int contextId, boolean highPrioroty) {
+                Log.e("Telegram RPC", "mt -> " + object.getClass().getSimpleName() + " " + System.currentTimeMillis() / 1000);
+                return 0;
+            }
+        };
+
+        MTProto.injector = new MTProto.Injector() {
+            @Override
+            protected void onTcpFixedThreadReconnect(MTProto mtProto, String host, int port, boolean useChecksum, TcpContextCallback tcpListener) {
+                Log.e("Telegram TCP","#### tcp connect "+host+":"+port+" ####");
+            }
+
+            @Override
+            public void onReceiveMTMessage(TLObject object) {
+                Log.e("Telegram RPC", "mt <- " + object.getClass().getSimpleName() + " " + System.currentTimeMillis() / 1000);
+            }
+        };
+    }
 
     @Override
     public void onCreate() {

@@ -6,18 +6,19 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.os.Build;
+import android.util.Log;
 import org.telegram.android.R;
 import org.telegram.android.core.background.UpdateProcessor;
 import org.telegram.android.log.Logger;
 import org.telegram.android.reflection.CrashHandler;
-import org.telegram.android.util.NativeAES;
 import org.telegram.android.util.NativePQ;
 import org.telegram.api.TLAbsUpdates;
-import org.telegram.api.engine.ApiCallback;
-import org.telegram.api.engine.AppInfo;
-import org.telegram.api.engine.TelegramApi;
-import org.telegram.mtproto.secure.CryptoUtils;
+import org.telegram.api.engine.*;
 import org.telegram.mtproto.secure.pq.PQSolver;
+import org.telegram.tl.TLMethod;
+import org.telegram.tl.TLObject;
+
+import java.io.IOException;
 
 /**
  * Created by ex3ndr on 16.11.13.
@@ -81,7 +82,33 @@ public class ApiKernel {
                     updateProcessor.onMessage(updates);
                 }
             }
-        });
+
+
+        }) {
+            @Override
+            public <T extends TLObject> void doRpcCallEndPoint(TLMethod<T> method, int timeout, RpcCallback<T> callback, int destDc, boolean authRequired) {
+                Log.e("Telegram RPC", "rpc #"+destDc+" -> "+method.getClass().getSimpleName()+"");
+                super.doRpcCallEndPoint(method, timeout, callback, destDc, authRequired);
+            }
+
+            @Override
+            public <T extends TLObject> T doRpcCallSideGzip(TLMethod<T> method, int timeout) throws IOException {
+                Log.e("Telegram RPC", "rpc gzip -> "+method.getClass().getSimpleName()+"");
+                return super.doRpcCallSideGzip(method, timeout);
+            }
+
+            @Override
+            public <T extends TLObject> T doRpcCallGzip(TLMethod<T> method, int timeout) throws IOException {
+                Log.e("Telegram RPC", "rpc gzip -> "+method.getClass().getSimpleName()+"");
+                return super.doRpcCallGzip(method, timeout);
+            }
+
+            @Override
+            protected void onMessageArrived(TLObject object) {
+                Log.e("Telegram RPC", "rpc <- "+object.getClass().getSimpleName()+"");
+                super.onMessageArrived(object);
+            }
+        };
 
         BroadcastReceiver networkStateReceiver = new BroadcastReceiver() {
             @Override

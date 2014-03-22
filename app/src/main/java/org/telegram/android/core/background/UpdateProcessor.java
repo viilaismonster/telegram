@@ -3,6 +3,7 @@ package org.telegram.android.core.background;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import org.telegram.android.TelegramApplication;
 import org.telegram.android.core.ApiUtils;
 import org.telegram.android.core.EngineUtils;
@@ -15,16 +16,19 @@ import org.telegram.android.core.model.update.*;
 import org.telegram.android.log.Logger;
 import org.telegram.android.reflection.CrashHandler;
 import org.telegram.api.*;
-import org.telegram.api.TLAbsMessage;
-import org.telegram.api.TLMessage;
 import org.telegram.api.engine.RpcException;
-import org.telegram.api.messages.*;
+import org.telegram.api.messages.TLAbsSentMessage;
+import org.telegram.api.messages.TLAbsStatedMessage;
+import org.telegram.api.messages.TLAbsStatedMessages;
 import org.telegram.api.requests.TLRequestUpdatesGetDifference;
 import org.telegram.api.requests.TLRequestUpdatesGetState;
 import org.telegram.api.updates.*;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Author: Korshakov Stepan
@@ -116,18 +120,46 @@ public class UpdateProcessor {
                             } else {
                                 Logger.d(TAG, "Getting difference");
                                 try {
+                                    Log.e(TAG, "rpc -> TLRequestUpdatesGetDifference"
+                                            +" state: pts="+updateState.getPts()
+                                            +" qts="+updateState.getQts()
+                                            +" date="+updateState.getDate()
+                                    );
                                     TLAbsDifference diff = application.getApi().doRpcCall(new TLRequestUpdatesGetDifference(updateState.getPts(), updateState.getDate(), updateState.getQts()), DIFF_TIMEOUT);
                                     if (isDestroyed) {
                                         return;
                                     }
                                     if (!application.isLoggedIn())
                                         return;
+                                    Log.e(TAG, "rpc <- receive difference " + diff.getClass().getSimpleName());
                                     if (diff instanceof TLDifference) {
                                         TLDifference difference = (TLDifference) diff;
+                                        TLState newSt = difference.getState();
+                                        Log.e(TAG, "rpc <- difference"
+                                                + " msg=" + difference.getNewMessages().size()
+                                                + " chat=" + difference.getChats().size()
+                                                + " update=" + difference.getOtherUpdates().size()
+                                                + " user=" + difference.getUsers().size()
+                                                + " state: pts=" + updateState.getPts() + "->" + newSt.getPts()
+                                                + " qts=" + updateState.getQts() + "->" + newSt.getQts()
+                                                + " seq=" + updateState.getSeq() + "->" + newSt.getSeq()
+                                                + " date=" + updateState.getDate() + "->" + newSt.getDate()
+                                        );
                                         onDifference(difference);
                                         onValidated();
                                     } else if (diff instanceof TLDifferenceSlice) {
                                         TLDifferenceSlice slice = (TLDifferenceSlice) diff;
+                                        TLState newSt = slice.getIntermediateState();
+                                        Log.e(TAG, "rpc <- difference"
+                                                + " msg=" + slice.getNewMessages().size()
+                                                + " chat=" + slice.getChats().size()
+                                                + " update=" + slice.getOtherUpdates().size()
+                                                + " user=" + slice.getUsers().size()
+                                                + " state: pts=" + updateState.getPts() + "->" + newSt.getPts()
+                                                + " qts=" + updateState.getQts() + "->" + newSt.getQts()
+                                                + " seq=" + updateState.getSeq() + "->" + newSt.getSeq()
+                                                + " date=" + updateState.getDate() + "->" + newSt.getDate()
+                                        );
                                         onSliceDifference(slice);
                                         getHandler().sendEmptyMessage(0);
                                     } else if (diff instanceof TLDifferenceEmpty) {
@@ -621,6 +653,7 @@ public class UpdateProcessor {
     }
 
     private void onUpdateShort(TLUpdateShort updateShort, PackageIdentity identity) {
+        Log.e(TAG, "rpc <- update short "+updateShort.getUpdate().getClass().getSimpleName());
         onUpdate(updateShort.getDate(), updateShort.getUpdate(), identity);
     }
 
@@ -742,7 +775,10 @@ public class UpdateProcessor {
         }
     }
 
-    private void onUpdateShortMessage(TLUpdateShortMessage message) {
+    void onUpdateShortMessage(TLUpdateShortMessage message) {
+        
+        Log.e(TAG, "rpc <- update shortMsg "+message.getMessage());
+
         boolean isAdded = application.getEngine().onNewMessage(PeerType.PEER_USER, message.getFromId(), message.getId(),
                 message.getDate(), message.getFromId(), message.getMessage());
 

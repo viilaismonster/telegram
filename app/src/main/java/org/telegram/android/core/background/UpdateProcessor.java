@@ -648,6 +648,7 @@ public class UpdateProcessor {
         application.getEngine().onUsers(updates.getUsers());
         application.getEngine().getGroupsEngine().onGroupsUpdated(updates.getChats());
         for (TLAbsUpdate u : updates.getUpdates()) {
+            Log.e(TAG, "rpc <- updates "+u.getClass().getSimpleName());
             onUpdate(updates.getDate(), u, identity);
         }
     }

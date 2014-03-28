@@ -18,6 +18,7 @@ import java.util.Date;
  * Time: 18:29
  */
 public class Logger {
+
     private static class LogRecord {
         private long time;
         private String tag;

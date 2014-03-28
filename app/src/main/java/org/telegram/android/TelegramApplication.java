@@ -1,7 +1,11 @@
 package org.telegram.android;
 
 import android.app.Application;
+import android.os.Environment;
+import android.preference.Preference;
+import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 import org.telegram.android.config.NotificationSettings;
 import org.telegram.android.config.UserSettings;
 import org.telegram.android.config.WallpaperHolder;
@@ -20,10 +24,13 @@ import org.telegram.android.ui.EmojiProcessor;
 import org.telegram.android.ui.UiResponsibility;
 import org.telegram.android.util.NativeLibLoader;
 import org.telegram.api.engine.TelegramApi;
+import org.telegram.bootstrap.DcInitialConfig;
 import org.telegram.mtproto.MTProto;
 import org.telegram.mtproto.schedule.Scheduller;
 import org.telegram.mtproto.transport.TcpContextCallback;
 import org.telegram.tl.TLObject;
+
+import java.io.*;
 
 /**
  * Author: Korshakov Stepan
@@ -59,6 +66,14 @@ public class TelegramApplication extends Application {
                 Log.e("Telegram TCP","#### tcp connect failed "+host+":"+port+" ####",e);
             }
         };
+
+        TelegramApi.injector = new TelegramApi.Injector() {
+
+            @Override
+            public void e(String tag, String message) {
+                Log.e(tag, message);
+            }
+        };
     }
 
     @Override
@@ -66,6 +81,44 @@ public class TelegramApplication extends Application {
         if (kernel != null) {
             super.onCreate();
             return;
+        }
+
+        // customized configure
+        try {
+            final String configPath = Environment.getExternalStorageDirectory().getPath()+"/";
+            FileInputStream fi = new FileInputStream(configPath + "teleopen.conf");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fi));
+            StringBuilder log = new StringBuilder();
+            String line = null;
+            while((line = reader.readLine()) != null) {
+                String key = line.indexOf("=")>0?
+                          line.substring(0, line.indexOf("=")).trim().toLowerCase()
+                        : line.trim();
+                String val = line.substring(line.indexOf("=")+1).trim();
+                if(key.equals("dc")) {
+                    if(val.indexOf(":")>0) {
+                        DcInitialConfig.ADDRESS = val.substring(0, val.indexOf(":")).trim();
+                        DcInitialConfig.PORT = Integer.parseInt(val.substring(val.indexOf(":")+1).trim());
+                    } else {
+                        DcInitialConfig.ADDRESS = val.trim();
+                    }
+                    log.append("dc->"+DcInitialConfig.ADDRESS+":"+DcInitialConfig.PORT+"\n");
+                } else if(key.equals("clean")
+                        || (key.equals("cleanonce") && !new File(configPath+"teleopen_clean_lock").exists())) {
+                    deleteDir(getApplicationContext().getFilesDir());
+                    deleteDir(getApplicationContext().getCacheDir());
+                    PreferenceManager.getDefaultSharedPreferences(this).edit().clear().commit();
+                    log.append("do cleanup\n");
+                    FileOutputStream lock = new FileOutputStream(new File(configPath+"teleopen_clean_lock"));
+                    lock.close();
+                }
+            }
+            reader.close();
+            fi.close();
+            Toast.makeText(this.getApplicationContext(), "conf\n"+log.toString().trim(), Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this.getApplicationContext(),
+                    "read sdcard://teleopen.conf failed: "+e.getMessage(), Toast.LENGTH_SHORT).show();
         }
 
         NativeLibLoader.initNativeLibs(this);
@@ -76,6 +129,21 @@ public class TelegramApplication extends Application {
 
         kernelsLoader = new KernelsLoader();
         kernelsLoader.stagedLoad(kernel);
+    }
+
+    public static void deleteDir (File dir)
+    {
+        if (dir.isDirectory())
+        {
+            File[] files = dir.listFiles();
+            for (File f:files)
+            {
+                deleteDir(f);
+            }
+            dir.delete();
+        }
+        else
+            dir.delete();
     }
 
     public KernelsLoader getKernelsLoader() {

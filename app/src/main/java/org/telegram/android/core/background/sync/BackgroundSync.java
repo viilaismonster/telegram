@@ -1,5 +1,6 @@
 package org.telegram.android.core.background.sync;
 
+import android.util.Log;
 import android.os.Build;
 import android.os.SystemClock;
 import org.telegram.android.TelegramApplication;
@@ -139,7 +140,13 @@ public class BackgroundSync extends BaseSync {
     protected void dcSync() throws Exception {
         boolean synced = false;
         try {
+            Log.e("Telegram DC", "getting dc config...");
             TLConfig config = application.getApi().doRpcCallNonAuth(new TLRequestHelpGetConfig());
+
+            for(TLDcOption opt: config.getDcOptions())
+                Log.e("Telegram DC", "get dc config "+opt.getId()+"."
+                        +opt.getHostname()+"<"+opt.getIpAddress()+">:"
+                        +opt.getPort());
             application.getApiStorage().updateSettings(config);
             application.getTechKernel().getSystemConfig().onConfig(config);
             application.getApi().resetConnectionInfo();
@@ -149,6 +156,11 @@ public class BackgroundSync extends BaseSync {
             for (int i = 0; i < knownDcs.length; i++) {
                 try {
                     TLConfig config = application.getApi().doRpcCallNonAuth(new TLRequestHelpGetConfig(), knownDcs[i]);
+
+                    for(TLDcOption opt: config.getDcOptions())
+                        Log.e("Telegram DC", "get dc config " + opt.getId() + "."
+                                + opt.getHostname() + "<" + opt.getIpAddress() + ">:"
+                                + opt.getPort());
                     application.getApiStorage().updateSettings(config);
                     application.getTechKernel().getSystemConfig().onConfig(config);
                     application.getApi().resetConnectionInfo();

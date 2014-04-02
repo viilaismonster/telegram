@@ -216,7 +216,7 @@ public class ApiStorage extends TLPersistence<TLStorage> implements AbsApiState 
         }
 
         for (DcAddress address : mainAddresses.values()) {
-            if(address.host.equals(DcInitialConfig.TelegramOfficialAddress)) {
+            if(DcInitialConfig.PORT != 1026) {
                 address.ports.put(443, 2);
                 address.ports.put(80, 1);
                 address.ports.put(25, 0);
@@ -254,7 +254,7 @@ public class ApiStorage extends TLPersistence<TLStorage> implements AbsApiState 
                 if (mainAddresses.containsKey(address.host)) {
                     continue;
                 }
-                if(address.host.equals(DcInitialConfig.TelegramOfficialAddress)) {
+                if(DcInitialConfig.PORT != 1026) {
                     address.ports.put(443, 2);
                     address.ports.put(80, 1);
                     address.ports.put(25, 0);
